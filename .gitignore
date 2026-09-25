@@ -32,3 +32,6 @@ output
 data
 literature
 dask-work-space
+# experiment smoke runs
+results/*_quick*
+.venv
