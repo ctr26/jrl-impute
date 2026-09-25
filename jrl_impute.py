@@ -2,7 +2,7 @@
 whose unmeasured entries are imputed from a sparse set of "bead" PSFs.
 
 Self-contained (numpy / scipy / scikit-learn / scikit-image); see
-docs/METHOD.md for the maths and README.md for usage.
+docs/PROOFS.md for the maths and README.md for usage.
 
 Pipeline
 --------
@@ -71,8 +71,8 @@ def forward_matrix(psfs: np.ndarray, shape: tuple[int, int]) -> sparse.csr_array
     """Sparse measurement matrix ``H`` with ``b = H @ x`` (both flattened).
 
     Column ``v`` is the image of a point source at pixel ``v``: ``psfs[v]``
-    centred on ``v`` and cropped at the border (zero boundary). For a
-    single symmetric PSF this equals ``ndimage.convolve(x, psf, mode="constant")``.
+    centred on ``v`` and cropped at the border (zero boundary). For any single
+    (odd-sized) PSF this equals ``ndimage.convolve(x, psf, mode="constant")``.
     """
     h, w = shape
     n, k, _ = psfs.shape
@@ -193,11 +193,12 @@ def richardson_lucy(H: sparse.sparray, b: np.ndarray, n_iter: int = 50,
 class ProductConvolution:
     """Rank-r column-varying operator ``H x = sum_i e_i (*) (c_i . x)``.
 
-    Built from a PSF field by truncated SVD over the *whole* field, which is
-    the Hilbert-Schmidt-optimal rank-r model (docs/PROOFS.md T3); the
-    discarded energy ``tail`` = sum_{i>r} sigma_i^2 is its squared HS error
-    (periodic boundary). Uses zero-padded FFTs, so it matches
-    ``forward_matrix`` (zero boundary) up to the rank-r truncation.
+    Built from a PSF field by uncentred truncated SVD over the *whole* field,
+    the Hilbert-Schmidt-optimal rank-r model (docs/PROOFS.md T3). The
+    discarded energy ``tail`` = sum_{i>r} sigma_i^2 is an upper bound on the
+    squared HS error (exact for interior columns). Uses zero-padded FFTs, so
+    it matches ``forward_matrix`` (zero boundary) at full rank. A truncated
+    operator can have negative entries; ``richardson_lucy_pc`` clamps H x.
     """
 
     def __init__(self, psfs: np.ndarray, shape: tuple[int, int], rank: int):

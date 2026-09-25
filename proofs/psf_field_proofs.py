@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Numerical checks of the PSF-field results in docs/PROOFS.md.
 
-Self-contained (numpy only; matplotlib optional for --plot). Run:
+Self-contained (numpy + scipy; matplotlib optional for --plot). Run:
 
     python proofs/psf_field_proofs.py            # prints a report, asserts every bound
     python proofs/psf_field_proofs.py --plot f.png

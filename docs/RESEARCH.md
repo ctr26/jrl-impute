@@ -4,7 +4,7 @@
 > Are coefficient fields smooth? How do we do this **blind**? What about STED and SIM?
 > **Companion docs.** Proofs in [`PROOFS.md`](PROOFS.md), checked by [`proofs/psf_field_proofs.py`](../proofs/psf_field_proofs.py).
 > The framing log is in [`scratchpad.md`](scratchpad.md).
-> Citation status: see [References](#references). Every entry was checked against the literature; see the note there.
+> Citations are numbered in [References](#references) and were checked against Crossref / arXiv / ADS.
 
 ---
 
@@ -27,8 +27,8 @@
   - A widefield **z-stack is phase diversity** for free.
   - So jointly estimate the object plus ~5–20 physical parameters, not a free-form PSF.
 - **STED and SIM:** factor the effective PSF into **measurable physics** plus **a few scalars** you can fit blind.
-  - **STED:** excitation PSF × saturation-suppression of the donut; unknowns are `ζ` and a few donut aberrations.
-  - **SIM:** detection PSF ⊛ (known-form illumination × object). This is *already* a product-convolution, so it fits this repo's framework directly.
+  - **STED:** excitation PSF × saturation-suppression of the donut; unknowns are `ζ` and a few donut aberrations (Antonello 2017 [47]: only a few low-order modes fill the zero). Blind, spatially varying STED looks like an open gap.
+  - **SIM:** detection PSF ⊛ (known-form illumination × object). This is *already* a product-convolution, so it fits this repo's framework directly. Spatial variation is currently handled by tiling (Hoffman & Betzig 2020 [52]); a smooth parameter field looks open.
 
 ---
 
@@ -96,6 +96,14 @@ Mangeat and Weiss then applied this line of work to **learning low-dimensional m
 ---
 
 ## 4. Recommended model: physics-first hybrid PSF field
+
+> **Prior art.** Physics-parametrised fields are *established*:
+> - field-dependent pupils via Fourier ptychography (Zheng 2013; Chung 2016 [30, 31])
+> - Seidel-coefficient fits in ring deconvolution [13]
+> - field-dependent Zernikes in SMLM [33, 34]
+> - wavefront-space hybrids in astronomy (WaveDiff [19])
+>
+> What this repo adds is the *proof chain* (T1–T6), a *controlled comparison* against the non-parametric family, and the *blind + diversity* formulation for widefield/STED/SIM.
 
 ```mermaid
 flowchart LR
@@ -216,6 +224,77 @@ flowchart LR
 
 ## References
 
-*Status legend:* ✔ verified (title, venue, year checked); ✎ corrected; ✘ removed. The verification pass is recorded in the commit that added this file.
+*Verification (2026-09-25):* all entries checked against Crossref / arXiv / ADS / publisher pages
+(abstract level). ✎ marks entries corrected during verification.
 
-<!-- REFERENCES_PLACEHOLDER -->
+**Spatially varying operators and PSF interpolation**
+1. Nagy, J.G. & O'Leary, D.P. Restoring images degraded by spatially variant blur. *SIAM J. Sci. Comput.* 19(4):1063–1082, 1998. doi:10.1137/S106482759528507X
+2. Lauer, T.R. Deconvolution with a spatially-variant PSF. *Proc. SPIE* 4847:167, 2002. doi:10.1117/12.461035. arXiv:astro-ph/0208247. *KL/PCA eigen-PSFs + RL: essentially this repo's original method.*
+3. Flicker, R.C. & Rigaut, F.J. Anisoplanatic deconvolution of adaptive optics images. *JOSA A* 22(3):504–513, 2005. doi:10.1364/JOSAA.22.000504
+4. Hirsch, M., Sra, S., Schölkopf, B. & Harmeling, S. Efficient filter flow for space-variant multiframe blind deconvolution. *CVPR* 2010, 607–614. doi:10.1109/CVPR.2010.5540158
+5. Denis, L., Thiébaut, É., Soulez, F., Becker, J.-M. & Mourya, R. Fast approximations of shift-variant blur. *IJCV* 115(3):253–278, 2015. doi:10.1007/s11263-015-0817-x
+6. ✎ Escande, P. & Weiss, P. Sparse wavelet representations of spatially varying blurring operators. *SIAM J. Imaging Sci.* 8(4):2976–3014, 2015. doi:10.1137/151003465
+7. Escande, P. & Weiss, P. Approximation of integral operators using product-convolution expansions. *J. Math. Imaging Vis.* 58:333–348, 2017. doi:10.1007/s10851-017-0714-8. *Error bounds for exactly the T3/T4 operator.*
+8. Bigot, J., Escande, P. & Weiss, P. Estimation of linear operators from scattered impulse responses. *Appl. Comput. Harmon. Anal.* 47(3):730–758, 2019. doi:10.1016/j.acha.2017.12.002. arXiv:1610.04056
+9. Debarnot, V., Escande, P. & Weiss, P. A scalable estimator of sets of integral operators. *Inverse Problems* 35(10):105011, 2019. doi:10.1088/1361-6420/ab2fb3
+10. Debarnot, V., Escande, P., Mangeat, T. & Weiss, P. Learning low-dimensional models of microscopes. *IEEE Trans. Comput. Imaging* 7:178–190, 2021. doi:10.1109/TCI.2020.3048295
+11. Yanny, K. et al. Miniscope3D: optimized single-shot miniature 3D fluorescence microscopy. *Light Sci. Appl.* 9:171, 2020. doi:10.1038/s41377-020-00403-7
+12. Yanny, K., Monakhova, K., Shuai, R.W. & Waller, L. Deep learning for fast spatially varying deconvolution. *Optica* 9(1):96–99, 2022. doi:10.1364/OPTICA.442438
+13. Kohli, A. et al. Ring deconvolution microscopy: exploiting symmetry for efficient spatially varying aberration correction. *Nat. Methods*, 2025. doi:10.1038/s41592-025-02684-5. arXiv:2206.08928. **Prior art for Seidel/Hopkins-parametrised fields.**
+14. Temerinac-Ott, M. et al. Multiview deblurring for 3-D images from light-sheet-based fluorescence microscopy. *IEEE TIP* 21(4):1863–1873, 2012. doi:10.1109/TIP.2011.2181528
+15. Toader, B. et al. Image reconstruction in light-sheet microscopy: spatially varying deconvolution and mixed noise. *J. Math. Imaging Vis.* 64:968–992, 2022. doi:10.1007/s10851-022-01100-3
+
+**Statistical PSF-field models (astronomy)**
+
+16. Ngolè Mboula, F.M., Starck, J.-L., Okumura, K., Amiaux, J. & Hudelot, P. Constraint matrix factorization for space variant PSFs field restoration. *Inverse Problems* 32(12):124001, 2016. doi:10.1088/0266-5611/32/12/124001
+17. ✎ Schmitz, M.A. et al. Euclid: Nonparametric point spread function field recovery through interpolation on a graph Laplacian. *A&A* 636:A78, 2020. doi:10.1051/0004-6361/201936094. *(RCA + graph-Laplacian interpolation; not MCCD.)*
+18. ✎ Liaudat, T. et al. Multi-CCD modelling of the point spread function. *A&A* 646:A27, 2021. doi:10.1051/0004-6361/202039584. *(MCCD.)*
+19. Liaudat, T., Starck, J.-L., Kilbinger, M. & Frugier, P.-A. Rethinking data-driven point spread function modeling with a differentiable optical model. *Inverse Problems* 39(3):035008, 2023. doi:10.1088/1361-6420/acb664. *(WaveDiff.)*
+20. Liaudat, T.I., Starck, J.-L. & Kilbinger, M. Point spread function modelling for astronomical telescopes: a review focused on weak gravitational lensing studies. *Front. Astron. Space Sci.* 10:1158213, 2023. doi:10.3389/fspas.2023.1158213
+21. Bertin, E. Automated morphometry with SExtractor and PSFEx. *ASP Conf. Ser.* 442:435, 2011. ADS 2011ASPC..442..435B
+22. Jarvis, M. et al. Dark Energy Survey Year 3 results: point spread function modelling. *MNRAS* 501(1):1282–1299, 2021. doi:10.1093/mnras/staa3679. *(PIFF.)*
+23. Gentile, M., Courbin, F. & Meylan, G. Interpolating point spread function anisotropy. *A&A* 549:A1, 2013. doi:10.1051/0004-6361/201219739. *RBF best, then IDW and kriging; global polynomials clearly worse.*
+24. Jee, M.J. et al. Principal component analysis of the time- and position-dependent point-spread function of the Advanced Camera for Surveys. *PASP* 119:1403–1419, 2007. doi:10.1086/524849
+
+**Optics: aberration theory and pupil models**
+
+25. Hopkins, H.H. *Wave Theory of Aberrations.* Oxford: Clarendon Press, 1950.
+26. ✎ Thompson, K. Description of the third-order optical aberrations of near-circular pupil optical systems without symmetry. *JOSA A* 22(7):1389–1401, 2005. doi:10.1364/JOSAA.22.001389
+27. Hanser, B.M., Gustafsson, M.G.L., Agard, D.A. & Sedat, J.W. Phase-retrieved pupil functions in wide-field fluorescence microscopy. *J. Microsc.* 216(1):32–48, 2004. doi:10.1111/j.0022-2720.2004.01393.x
+28. ✎ Gibson, S.F. & Lanni, F. Experimental test of an analytical model of aberration in an oil-immersion objective lens used in three-dimensional light microscopy. *JOSA A* 8(10):1601–1613, 1991. doi:10.1364/JOSAA.8.001601
+29. Li, J., Xue, F. & Blu, T. Fast and accurate three-dimensional point spread function computation for fluorescence microscopy. *JOSA A* 34(6):1029–1034, 2017. doi:10.1364/JOSAA.34.001029
+30. Zheng, G., Ou, X., Horstmeyer, R. & Yang, C. Characterization of spatially varying aberrations for wide field-of-view microscopy. *Opt. Express* 21:15131, 2013. doi:10.1364/OE.21.015131
+31. Chung, J., Kim, J., Ou, X., Horstmeyer, R. & Yang, C. Wide field-of-view fluorescence image deconvolution with aberration-estimation from Fourier ptychography. *Biomed. Opt. Express* 7:352, 2016. doi:10.1364/BOE.7.000352
+32. Xu, F. et al. Three-dimensional nanoscopy of whole cells and tissues with in situ point spread function retrieval. *Nat. Methods* 17:531–540, 2020. doi:10.1038/s41592-020-0816-x
+33. Liu, S. et al. Universal inverse modeling of point spread functions for SMLM localization and microscope characterization. *Nat. Methods* 21:1082–1093, 2024. doi:10.1038/s41592-024-02282-x
+34. Fu, S. et al. Field-dependent deep learning enables high-throughput whole-cell 3D super-resolution imaging. *Nat. Methods* 20:459–468, 2023. doi:10.1038/s41592-023-01775-5
+35. Xiao, D. et al. Large-FOV 3D localization microscopy by spatially variant point spread function generation. *Sci. Adv.* 10:eadj3656, 2024. doi:10.1126/sciadv.adj3656
+36. von Diezmann, L., Lee, M.Y., Lew, M.D. & Moerner, W.E. Correcting field-dependent aberrations with nanoscale accuracy in three-dimensional single-molecule localization microscopy. *Optica* 2(11):985–993, 2015. doi:10.1364/OPTICA.2.000985
+
+**Blind deconvolution and phase diversity**
+
+37. Gonsalves, R.A. Phase retrieval and diversity in adaptive optics. *Opt. Eng.* 21(5):829–832, 1982. doi:10.1117/12.7972989
+38. Paxman, R.G., Schulz, T.J. & Fienup, J.R. Joint estimation of object and aberrations by using phase diversity. *JOSA A* 9(7):1072–1085, 1992. doi:10.1364/JOSAA.9.001072
+39. Soulez, F., Denis, L., Tourneur, Y. & Thiébaut, É. Blind deconvolution of 3D data in wide field fluorescence microscopy. *IEEE ISBI* 2012, 1735–1738. doi:10.1109/ISBI.2012.6235915
+40. Keuper, M. et al. Blind deconvolution of widefield fluorescence microscopic data by regularization of the optical transfer function (OTF). *CVPR* 2013, 2179–2186. doi:10.1109/CVPR.2013.283
+41. Shajkofci, A. & Liebling, M. Spatially-variant CNN-based point spread function estimation for blind deconvolution and depth estimation in optical microscopy. *IEEE TIP* 29:5848–5861, 2020. doi:10.1109/TIP.2020.2986880
+42. ✎ Debarnot, V. & Weiss, P. Deep-blur: blind identification and deblurring with convolutional neural networks. *Biological Imaging* 4:e13, 2024. doi:10.1017/S2633903X24000096
+43. ✎ Debarnot, V. & Weiss, P. Blind inverse problems with isolated spikes. *Inf. Inference* 12(1):26–71, 2023. doi:10.1093/imaiai/iaac015
+44. Kang, I. et al. Coordinate-based neural representations for computational adaptive optics in widefield microscopy. *Nat. Mach. Intell.* 6:714–725, 2024. doi:10.1038/s42256-024-00853-3. *(CoCoA.)*
+
+**STED and SIM**
+
+45. Harke, B. et al. Resolution scaling in STED microscopy. *Opt. Express* 16(6):4154–4162, 2008. doi:10.1364/OE.16.004154
+46. Zanella, R. et al. Towards real-time image deconvolution: application to confocal and STED microscopy. *Sci. Rep.* 3:2523, 2013. doi:10.1038/srep02523
+47. Antonello, J., Burke, D. & Booth, M.J. Aberrations in stimulated emission depletion (STED) microscopy. *Opt. Commun.* 404:203–209, 2017. doi:10.1016/j.optcom.2017.06.037
+48. Mudry, E. et al. Structured illumination microscopy using unknown speckle patterns. *Nat. Photonics* 6:312–315, 2012. doi:10.1038/nphoton.2012.83
+49. Labouesse, S. et al. Joint reconstruction strategy for structured illumination microscopy with unknown illuminations. *IEEE TIP* 26(5):2480–2493, 2017. doi:10.1109/TIP.2017.2675200
+50. Orieux, F. et al. Bayesian estimation for optimized structured illumination microscopy. *IEEE TIP* 21(2):601–614, 2012. doi:10.1109/TIP.2011.2162741
+51. Müller, M. et al. Open-source image reconstruction of super-resolution structured illumination microscopy data in ImageJ. *Nat. Commun.* 7:10980, 2016. doi:10.1038/ncomms10980
+52. Hoffman, D.P. & Betzig, E. Tiled reconstruction improves structured illumination microscopy. *bioRxiv*, 2020. doi:10.1101/2020.01.06.895318 *(preprint)*
+
+**Approximation theory**
+
+53. ✎ Wendland, H. *Scattered Data Approximation.* Cambridge University Press, 2004. doi:10.1017/CBO9780511617539. *Sobolev `H^τ` interpolation: `L∞` error `O(h^{τ−d/2})`; `L2` rate `O(h^τ)` via Narcowich, Ward & Wendland, Math. Comp. 2005.*
+
+*Removed as a spatially varying reference:* Preibisch et al. 2014 (multiview RL uses one shift-invariant PSF per view).
