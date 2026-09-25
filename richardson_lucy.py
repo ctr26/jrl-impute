@@ -10,8 +10,8 @@
 
 import numpy as np
 import time
-from scipy import matrix
-from scipy.sparse.linalg.interface import LinearOperator
+from numpy import matrix  # scipy.matrix was removed in SciPy 1.12
+from scipy.sparse.linalg import LinearOperator
 
 # from lflib.lightfield import LightField
 # from lflib.imageio import save_image
@@ -77,7 +77,7 @@ def matrix_reconstruction(A, b, x0 = None,
     trAb = A.rmatvec(b)
     trAb_norm = np.linalg.norm(trAb)
     # Start the optimization from the initial volume of a focal stack.
-    if x0 != None:
+    if x0 is not None:
         x = x0
     else:
         x = trAb

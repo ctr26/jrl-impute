@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import PIL
 import scipy
 
-from scipy import matrix
+from numpy import matrix  # scipy.matrix was removed in SciPy 1.12
 from scipy.sparse import coo_matrix
 import time
 from scipy import linalg
@@ -21,7 +21,7 @@ from keras.layers import Dense, Dropout, Activation, Convolution1D, Flatten, Con
 from keras.optimizers import SGD
 from keras.utils import to_categorical
 
-from sklearn.preprocessing import Imputer
+# from sklearn.preprocessing import Imputer  # removed in scikit-learn 0.22; use sklearn.impute
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 # from sklearn.experimental import enable_iterative_imputer
@@ -76,7 +76,7 @@ astro_shape = astro.shape
 x_astro,y_astro = astro_blur.shape
 xx_astro,yy_astro = np.meshgrid(np.linspace(-1,1,x_astro),np.linspace(-1,1,y_astro))
 psf_window_w,psf_window_h = (10,10)
-psf_window_volume = np.full((psf_window_w,psf_window_h,N_v),np.NaN)
+psf_window_volume = np.full((psf_window_w,psf_window_h,N_v),np.nan)
 
 illumination = np.cos(64/2*np.pi*xx_astro)
 
@@ -118,6 +118,8 @@ for i in np.arange(N_v):
     delta_image = np.zeros_like(astro)
     delta_image[np.unravel_index(i,astro_shape)] = 1
     delta_PSF = scipy.ndimage.convolve(delta_image,psf_current)
+    # NB: the point response of pixel i is column i of H (b = H x); writing it to
+    # row i builds H^T, which is only equal to H for one symmetric PSF. See jrl_impute.forward_matrix.
     measurement_matrix[i,:] = delta_PSF.flatten()
     # plt.imshow(psf_current)
     # plt.imsave(f'./output/psfs/{str(i).zfill(6)}.png',psf_window_volume[:,:,i])
@@ -138,7 +140,7 @@ beads = 100
 rows_to_nuke = np.random.choice(np.arange(measurement_matrix.shape[0]),measurement_matrix.shape[0]-beads)
 # rows_to_nuke
 psf_window_volume_nuked = psf_window_volume.copy()
-psf_window_volume_nuked[:,:,rows_to_nuke] = np.NaN
+psf_window_volume_nuked[:,:,rows_to_nuke] = np.nan
 
 X_indices = np.array(np.unravel_index(np.arange(0,psf_window_volume.size), psf_window_volume.shape)).T
 y_values = np.array(psf_window_volume_nuked.flatten())
@@ -451,9 +453,9 @@ for i in rows_to_nuke:
     delta_image = np.zeros_like(astro)
     delta_image[np.unravel_index(i,astro_shape)] = 1
     psf_ones = np.ones_like(static_psf);
-    # psf_complex[psf_complex==1j] = np.NaN
+    # psf_complex[psf_complex==1j] = np.nan
     delta_PSF = scipy.ndimage.convolve(delta_image,psf_ones)
-    delta_PSF[delta_PSF!=0] = np.NaN
+    delta_PSF[delta_PSF!=0] = np.nan
     # plt.imshow(delta_PSF)
     H_nuked[i,:] = delta_PSF.flatten()
     # delta_PSF = psf_xy
@@ -471,7 +473,7 @@ print(f'Nans in H: {nans_in_H} | Ratio: {ratio}')
 
 plt.imshow(H_nuked)
 plt.imsave('./output/H_nuked.png', H_nuked)
-# imp = SimpleImputer(missing_values=np.NaN, strategy='mean',verbose=1)
+# imp = SimpleImputer(missing_values=np.nan, strategy='mean',verbose=1)
 ####
 
 image_width = np.sqrt(N_v);image_width
@@ -490,7 +492,7 @@ if(FLAT_IMPUTE):
     from sklearn.linear_model import BayesianRidge
     #%% Matrix impute
 
-    imp = IterativeImputer(missing_values=np.NaN,verbose=2,estimator=BayesianRidge())
+    imp = IterativeImputer(missing_values=np.nan,verbose=2,estimator=BayesianRidge())
     imp.fit(H_nuked)
     H_fixed = imp.transform(H_nuked)
 
