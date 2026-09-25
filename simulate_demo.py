@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 import PIL
 import scipy
 
-from scipy import matrix
+from numpy import matrix  # scipy.matrix was removed in SciPy 1.12
 from scipy.sparse import coo_matrix
 import time
 from scipy import linalg
@@ -31,7 +31,7 @@ import pandas as pd
 
 import richardson_lucy
 
-from sklearn.preprocessing import Imputer
+# from sklearn.preprocessing import Imputer  # removed in scikit-learn 0.22; use sklearn.impute
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 # from sklearn.experimental import enable_iterative_imputer
@@ -75,6 +75,8 @@ for i in np.arange(N_v):
     delta_image = np.zeros_like(astro)
     delta_image[np.unravel_index(i,astro_shape)] = 1
     delta_PSF = scipy.ndimage.convolve(delta_image,psf)
+    # NB: the point response of pixel i is column i of H (b = H x); writing it to
+    # row i builds H^T, which is only equal to H for one symmetric PSF. See jrl_impute.forward_matrix.
     measurement_matrix[i,:] = delta_PSF.flatten()
     # plt.imshow(delta_image)
     # plt.show()
@@ -132,7 +134,7 @@ H_nuked = measurement_matrix.copy()
 for i in rows_to_nuke:
     delta_image = np.zeros_like(astro)
     delta_image[np.unravel_index(i,astro_shape)] = 1
-    psf_nan = np.zeros_like(psf)*np.NaN;psf_nan
+    psf_nan = np.zeros_like(psf)*np.nan;psf_nan
     delta_PSF = scipy.ndimage.convolve(delta_image,psf_nan)
     # plt.imshow(delta_PSF)
     H_nuked[i,:] = delta_PSF.flatten()

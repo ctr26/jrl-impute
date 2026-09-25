@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import PIL
 import scipy
 
-from scipy import matrix
+from numpy import matrix  # scipy.matrix was removed in SciPy 1.12
 from scipy.sparse import coo_matrix
 import time
 from scipy import linalg
@@ -90,7 +90,7 @@ x_astro, y_astro = astro_blur.shape
 xx_astro, yy_astro = np.meshgrid(np.linspace(-1, 1, x_astro),
                                     np.linspace(-1, 1, y_astro))
 psf_window_w, psf_window_h = (psf_w, psf_h)
-psf_window_volume = np.full((psf_window_w, psf_window_h, N_v), np.NaN)
+psf_window_volume = np.full((psf_window_w, psf_window_h, N_v), np.nan)
 
 illumination = np.cos(64 / 2 * np.pi * xx_astro)
 
@@ -134,6 +134,8 @@ for i in np.arange(N_v):
     delta_image = np.zeros_like(astro)
     delta_image[np.unravel_index(i, astro_shape)] = 1
     delta_PSF = scipy.ndimage.convolve(delta_image, psf_current)
+    # NB: the point response of pixel i is column i of H (b = H x); writing it to
+    # row i builds H^T, which is only equal to H for one symmetric PSF. See jrl_impute.forward_matrix.
     measurement_matrix[i, :] = delta_PSF.flatten()
     # plt.imshow(psf_current)
     # plt.imsave(f'./output/psfs/{str(i).zfill(6)}.png',psf_window_volume[:,:,i])
@@ -156,19 +158,19 @@ rows_to_nuke = np.random.choice(
 rows_to_nuke
 # rows_to_nuke
 psf_window_volume_nuked = psf_window_volume.copy()
-psf_window_volume_nuked[rows_to_nuke,:, :] = np.NaN
+psf_window_volume_nuked[rows_to_nuke,:, :] = np.nan
 
 # plt.imshow(np.reshape(psf_window_volume_nuked,(128*128,10*10)))
 
 H_nuked = measurement_matrix.copy()
-H_nuked[rows_to_nuke,:] = np.NaN
+H_nuked[rows_to_nuke,:] = np.nan
 # H_nuked.shape
 # np.sum(np.isfinite(H_nuked[:,0]))
 # plt.imshow(H_nuked)
 # plt.imshow(measurement_matrix)
 plt.imsave('./output/H_nuked.png', H_nuked)
 
-image_width,image_height = np.sqrt(measurement_matrix.shape).astype(np.int)
+image_width,image_height = np.sqrt(measurement_matrix.shape).astype(int)
 array_size_4d = [image_width,
                 image_height,
                 image_width,
