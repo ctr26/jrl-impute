@@ -11,6 +11,7 @@ Pipeline
 3. ``bead_mask``                     -> which PSFs are "measured"
 4. ``impute_psfs``                   -> fill in the rest from position
 5. ``richardson_lucy``               -> recover x from b = H x (+ noise)
+   (``ProductConvolution`` + ``richardson_lucy_pc``: rank-r FFT operator for large images)
 
 Run ``python jrl_impute.py --help`` for the end-to-end demo.
 """
@@ -183,6 +184,65 @@ def richardson_lucy(H: sparse.sparray, b: np.ndarray, n_iter: int = 50,
         x = x * (Ht @ (b / (Hx + background + eps))) / norm
         history[i] = np.linalg.norm(b - H @ x) / b_norm
     return x.reshape(shape), history
+
+
+# --------------------------------------------------------------------------
+# Product-convolution operator (low-rank, FFT-based; docs/PROOFS.md T3/T4)
+# --------------------------------------------------------------------------
+
+class ProductConvolution:
+    """Rank-r column-varying operator ``H x = sum_i e_i (*) (c_i . x)``.
+
+    Built from a PSF field by truncated SVD over the *whole* field, which is
+    the Hilbert-Schmidt-optimal rank-r model (docs/PROOFS.md T3); the
+    discarded energy ``tail`` = sum_{i>r} sigma_i^2 is its squared HS error
+    (periodic boundary). Uses zero-padded FFTs, so it matches
+    ``forward_matrix`` (zero boundary) up to the rank-r truncation.
+    """
+
+    def __init__(self, psfs: np.ndarray, shape: tuple[int, int], rank: int):
+        n, k, _ = psfs.shape
+        if n != shape[0] * shape[1]:
+            raise ValueError(f"need {shape[0] * shape[1]} PSFs for shape {shape}, got {n}")
+        M = psfs.reshape(n, k * k)
+        _, s, Vt = np.linalg.svd(M, full_matrices=False)
+        self.rank, self.shape, self.k = rank, shape, k
+        self.sigma = s
+        self.tail = float((s[rank:] ** 2).sum())
+        self.E = Vt[:rank].reshape(rank, k, k)                         # basis PSFs
+        self.C = (M @ Vt[:rank].T).T.reshape(rank, *shape)             # coefficient maps
+        self._pad = (shape[0] + k - 1, shape[1] + k - 1)
+        self._Ef = np.fft.rfft2(self.E, s=self._pad)
+
+    def _crop(self, full: np.ndarray) -> np.ndarray:
+        r = self.k // 2
+        return full[..., r:r + self.shape[0], r:r + self.shape[1]]
+
+    def matvec(self, x: np.ndarray) -> np.ndarray:
+        """``H x``: convolve each weighted image with its basis PSF and sum."""
+        xf = np.fft.rfft2(self.C * x.reshape(self.shape), s=self._pad)
+        return self._crop(np.fft.irfft2((self._Ef * xf).sum(0), s=self._pad))
+
+    def rmatvec(self, y: np.ndarray) -> np.ndarray:
+        """``H^T y``: correlate with each basis PSF, weight, and sum."""
+        yp = np.zeros(self._pad)
+        r = self.k // 2
+        yp[r:r + self.shape[0], r:r + self.shape[1]] = y.reshape(self.shape)
+        corr = np.fft.irfft2(np.conj(self._Ef) * np.fft.rfft2(yp)[None], s=self._pad)
+        corr = np.roll(corr, (r, r), axis=(-2, -1))                    # undo kernel offset
+        return (self.C * self._crop(corr)).sum(0)
+
+
+def richardson_lucy_pc(op: ProductConvolution, b: np.ndarray, n_iter: int = 50,
+                       background: float = 0.0, eps: float = 1e-12) -> np.ndarray:
+    """Richardson-Lucy with a :class:`ProductConvolution` operator (``r`` FFT pairs/iter)."""
+    b = np.clip(b.astype(float), 0.0, None)
+    norm = np.maximum(op.rmatvec(np.ones(op.shape)), eps)
+    x = np.full(op.shape, max(b.mean(), eps))
+    for _ in range(n_iter):
+        x = x * op.rmatvec(b / np.maximum(op.matvec(x) + background, eps)) / norm
+        x = np.clip(x, eps, None)
+    return x
 
 
 # --------------------------------------------------------------------------
